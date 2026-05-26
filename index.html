@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A*2IE · Expense Analyzer</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* DESIGN SYSTEM */
+        :root {
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F5F5F5;
+            --bg-card: #FAFAFA;
+            --text-primary: #0A0A0A;
+            --text-secondary: #555555;
+            --text-muted: #999999;
+            --border: #E0E0E0;
+            --border-strong: #1A1A1A;
+            --accent: #000000;
+            --danger: #1A1A1A;
+
+            --transition: all 0.15s ease;
+            --transition-slow: all 0.3s ease;
+        }
+
+        /* DARK THEME */
+        body.dark-theme {
+            --bg-primary: #000000;
+            --bg-secondary: #1A1A1A;
+            --bg-card: #0D0D0D;
+            --text-primary: #FFFFFF;
+            --text-secondary: #AAAAAA;
+            --text-muted: #666666;
+            --border: #2A2A2A;
+            --border-strong: #E0E0E0;
+            --accent: #FFFFFF;
+            --danger: #FFFFFF;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* HEADER */
+        header {
+            background: var(--bg-primary);
+            border-bottom: 2px solid var(--accent);
+            padding: 40px 20px;
+            text-align: center;
+            margin-bottom: 40px;
+            transition: var(--transition-slow);
+            position: relative;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 4px;
+            background: var(--bg-secondary);
+            padding: 4px;
+            border-radius: 6px;
+        }
+
+        .theme-toggle button {
+            width: auto;
+            padding: 8px 14px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+
+        .theme-toggle button.active {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+        }
+
+        .theme-toggle button:hover:not(.active) {
+            background: var(--bg-card);
+        }
+
+        .header-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.8rem, 5vw, 3.2rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+            text-transform: capitalize;
+        }
+
+        .header-divider {
+            width: 60px;
+            height: 2px;
+            background: var(--accent);
+            margin: 16px auto;
+        }
+
+        .header-subtitle {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* LAYOUT DESKTOP */
+        .container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 40px;
+            padding: 0 20px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        @media (min-width: 1024px) {
+            .container {
+                grid-template-columns: 320px 1fr;
+                gap: 60px;
+                padding: 0 40px 40px;
+            }
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            order: 2;
+        }
+
+        @media (min-width: 1024px) {
+            .sidebar {
+                order: 1;
+                position: sticky;
+                top: 40px;
+                height: fit-content;
+            }
+        }
+
+        .sidebar-section {
+            margin-bottom: 40px;
+        }
+
+        .sidebar-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 12px;
+        }
+
+        /* FORM */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-bottom: 2px solid var(--border);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        input[type="text"]:hover,
+        input[type="number"]:hover,
+        input[type="date"]:hover,
+        select:hover {
+            border-color: var(--text-muted);
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        input[type="date"]:focus,
+        select:focus {
+            outline: none;
+            border-bottom-color: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px var(--accent);
+        }
+
+        input[type="number"]::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* BUTTON */
+        button {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 12px 20px;
+            border: 2px solid var(--accent);
+            background: var(--accent);
+            color: var(--bg-primary);
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        button:hover {
+            background: var(--bg-primary);
+            color: var(--accent);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* FILTER BUTTONS */
+        .filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-btn {
+            width: auto;
+            padding: 8px 14px;
+            border: 1px solid var(--border-strong);
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 12px;
+            text-transform: capitalize;
+        }
+
+        .filter-btn.active {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            order: 1;
+        }
+
+        @media (min-width: 1024px) {
+            .main-content {
+                order: 2;
+            }
+        }
+
+        /* KPI CARDS */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 24px;
+            transition: var(--transition-slow);
+        }
+
+        .kpi-card:hover {
+            border-left: 3px solid var(--accent);
+            padding-left: 22px;
+        }
+
+        .kpi-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .kpi-value {
+            font-family: 'DM Mono', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* CHART SECTION */
+        .chart-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 32px;
+            margin-bottom: 40px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .chart-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 18px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        /* TRANSACTION LIST */
+        .transactions-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 18px;
+        }
+
+        .transaction-list {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-top: 2px solid var(--accent);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .transaction-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr 80px 40px;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            border-bottom: 0.5px solid var(--border);
+            transition: var(--transition-slow);
+            animation: fadeInUp 0.15s ease-out;
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        @media (max-width: 640px) {
+            .transaction-item {
+                grid-template-columns: 1fr 60px;
+                gap: 12px;
+            }
+        }
+
+        .transaction-date {
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .transaction-desc {
+            font-weight: 500;
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+
+        .transaction-category {
+            display: inline-block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border: 1px solid var(--border-strong);
+            padding: 6px 10px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: var(--transition);
+        }
+
+        .transaction-category:hover {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        @media (max-width: 640px) {
+            .transaction-category {
+                grid-column: 1;
+            }
+        }
+
+        .transaction-value {
+            font-family: 'DM Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            text-align: right;
+            color: var(--text-primary);
+        }
+
+        .transaction-delete {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border: 1px solid var(--border);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: var(--transition);
+            transform: translateX(16px);
+        }
+
+        .transaction-item:hover .transaction-delete {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .transaction-delete:hover {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+        }
+
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        /* FOOTER */
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 12px;
+            margin-top: 60px;
+        }
+
+        /* EXPORT BUTTON */
+        .export-btn {
+            width: auto;
+            padding: 10px 16px;
+            font-size: 12px;
+            margin-top: 16px;
+        }
+
+        /* ANIMATIONS */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeOutLeft {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(-16px);
+            }
+        }
+
+        .transaction-item.removing {
+            animation: fadeOutLeft 0.2s ease-out forwards;
+        }
+
+        /* SCROLLBAR */
+        .transaction-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .transaction-list::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        .transaction-list::-webkit-scrollbar-thumb {
+            background: var(--border);
+        }
+
+        .transaction-list::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        /* MOBILE DRAWER */
+        @media (max-width: 1024px) {
+            .sidebar {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
+                background: var(--bg-primary);
+                z-index: 1000;
+                overflow-y: auto;
+                padding: 40px 20px;
+            }
+
+            .sidebar.active {
+                display: block;
+            }
+
+            .sidebar::before {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: -1;
+            }
+        }
+
+        /* MOBILE BUTTON */
+        .mobile-add-btn {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            z-index: 999;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            transition: var(--transition-slow);
+        }
+
+        .mobile-add-btn:hover {
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 1024px) {
+            .mobile-add-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        .close-sidebar {
+            display: none;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 1024px) {
+            .close-sidebar {
+                display: block;
+            }
+        }
+
+        .close-sidebar:hover {
+            background: var(--bg-secondary);
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header>
+        <div class="theme-toggle" role="group" aria-label="Theme switcher">
+            <button class="active" data-theme="light" aria-pressed="true">B&W</button>
+            <button data-theme="dark" aria-pressed="false">Full Black</button>
+        </div>
+        <div class="header-title">A*2IE</div>
+        <div class="header-divider"></div>
+        <div class="header-subtitle">Analisador de Despesas · 2026</div>
+    </header>
+
+    <div class="container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <button class="close-sidebar" aria-label="Fechar menu">✕</button>
+
+            <!-- ADD EXPENSE FORM -->
+            <section class="sidebar-section">
+                <h2 class="sidebar-title">Adicionar Despesa</h2>
+                <form id="expenseForm">
+                    <div class="form-group">
+                        <label for="description">Descrição</label>
+                        <input type="text" id="description" placeholder="ex: Compras" required>
+                        <span class="error-msg" style="font-size: 11px; color: #C62828; display: none; margin-top: 4px; display: block;"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="value">Montante</label>
+                        <input type="number" id="value" placeholder="0.00" min="0.01" step="0.01" required>
+                        <span class="error-msg" style="font-size: 11px; color: #C62828; display: none; margin-top: 4px; display: block;"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category">Categoria</label>
+                        <select id="category" required>
+                            <option value="">Seleccione uma categoria</option>
+                            <option value="Food">Alimentação</option>
+                            <option value="Transportation">Transportes</option>
+                            <option value="Housing">Habitação</option>
+                            <option value="Health">Saúde</option>
+                            <option value="Leisure">Lazer</option>
+                            <option value="Education">Educação</option>
+                            <option value="Others">Outros</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="date">Data</label>
+                        <input type="date" id="date" required>
+                    </div>
+
+                    <button type="submit">Adicionar Despesa</button>
+                </form>
+            </section>
+
+            <!-- FILTERS -->
+            <section class="sidebar-section">
+                <h2 class="sidebar-title">Filtrar por Categoria</h2>
+                <div class="filter-group" id="categoryFilters">
+                    <!-- Preenchido dinamicamente -->
+                </div>
+            </section>
+
+            <!-- PERIOD FILTER -->
+            <section class="sidebar-section">
+                <h2 class="sidebar-title">Período</h2>
+                <div class="filter-group" id="periodFilters">
+                    <button class="filter-btn active" data-period="month">Este Mês</button>
+                    <button class="filter-btn" data-period="30days">Últimos 30 Dias</button>
+                    <button class="filter-btn" data-period="all">Todo o Tempo</button>
+                </div>
+            </section>
+
+            <!-- EXPORT -->
+            <section class="sidebar-section">
+                <button class="export-btn" id="exportBtn">Exportar como CSV</button>
+            </section>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- KPI CARDS -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-label">Total Gasto</div>
+                    <div class="kpi-value" id="kpiTotal">0.00 Kz</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Maior Despesa</div>
+                    <div class="kpi-value" id="kpiHighest">0.00 Kz</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Categoria com Mais Gasto</div>
+                    <div class="kpi-value" id="kpiCategory">—</div>
+                </div>
+            </div>
+
+            <!-- CHART -->
+            <section class="chart-section">
+                <h2 class="chart-title">Despesas por Categoria</h2>
+                <div class="chart-container">
+                    <canvas id="expenseChart"></canvas>
+                </div>
+            </section>
+
+            <!-- TRANSACTIONS -->
+            <section class="transactions-section">
+                <h2 class="section-title">Transações Recentes</h2>
+                <div class="transaction-list" id="transactionList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">∼</div>
+                        <div class="empty-state-text">Nenhuma despesa registada.<br>Comece a rastrear suas despesas.</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>A*2IE · Analisador de Despesas · 2026</p>
+    </footer>
+
+    <!-- MOBILE ADD BUTTON -->
+    <button class="mobile-add-btn" aria-label="Adicionar nova despesa">+</button>
+
+    <script>
+        // ============ STATE ============
+        const STATE = {
+            expenses: [],
+            selectedCategories: [],
+            selectedPeriod: 'month',
+            chart: null
+        };
+
+        const CATEGORIES = ['Alimentação', 'Transportes', 'Habitação', 'Saúde', 'Lazer', 'Educação', 'Outros'];
+        const STORAGE_KEY = 'despesas_2026';
+
+        // Mapeamento de categorias para compatibilidade
+        const CATEGORY_MAP = {
+            'Food': 'Alimentação',
+            'Transportation': 'Transportes',
+            'Housing': 'Habitação',
+            'Health': 'Saúde',
+            'Leisure': 'Lazer',
+            'Education': 'Educação',
+            'Others': 'Outros'
+        };
+
+        // ============ INITIALIZATION ============
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTheme();
+            loadFromStorage();
+            setDefaultDate();
+            initializeCategoryFilters();
+            initializeEventListeners();
+            initializeThemeToggle();
+            render();
+        });
+
+        // ============ THEME ============
+        const THEME_KEY = 'expense-analyzer-theme';
+
+        function loadTheme() {
+            const saved = localStorage.getItem(THEME_KEY) || 'light';
+            applyTheme(saved);
+        }
+
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark-theme');
+            } else {
+                document.body.classList.remove('dark-theme');
+            }
+            updateThemeButtons(theme);
+        }
+
+        function updateThemeButtons(theme) {
+            document.querySelectorAll('.theme-toggle button').forEach(btn => {
+                const isActive = btn.dataset.theme === theme;
+                btn.classList.toggle('active', isActive);
+                btn.setAttribute('aria-pressed', isActive);
+            });
+        }
+
+        function initializeThemeToggle() {
+            document.querySelectorAll('.theme-toggle button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const theme = btn.dataset.theme;
+                    localStorage.setItem(THEME_KEY, theme);
+                    applyTheme(theme);
+                });
+            });
+        }
+
+        // ============ STORAGE ============
+        function loadFromStorage() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                try {
+                    const data = JSON.parse(stored);
+                    STATE.expenses = data.entries || [];
+                } catch (e) {
+                    console.error('Falha ao analisar dados armazenados:', e);
+                }
+            }
+        }
+
+        function saveToStorage() {
+            const data = {
+                version: 1,
+                entries: STATE.expenses
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        // ============ INITIALIZATION HELPERS ============
+        function setDefaultDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date').value = today;
+        }
+
+        function initializeCategoryFilters() {
+            const container = document.getElementById('categoryFilters');
+            CATEGORIES.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn';
+                btn.textContent = cat;
+                btn.dataset.category = cat;
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    toggleCategoryFilter(cat, btn);
+                });
+                container.appendChild(btn);
+            });
+        }
+
+        // ============ EVENT LISTENERS ============
+        function initializeEventListeners() {
+            document.getElementById('expenseForm').addEventListener('submit', handleAddExpense);
+            document.getElementById('exportBtn').addEventListener('click', exportToCSV);
+            document.getElementById('periodFilters').addEventListener('click', handlePeriodChange);
+            document.querySelector('.mobile-add-btn').addEventListener('click', toggleSidebar);
+            document.querySelector('.close-sidebar').addEventListener('click', toggleSidebar);
+            document.addEventListener('keydown', handleKeyboardShortcuts);
+        }
+
+        function handleKeyboardShortcuts(e) {
+            // Cmd+K or Ctrl+K to focus description field
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                const sidebar = document.querySelector('.sidebar');
+                if (!sidebar.classList.contains('active')) {
+                    toggleSidebar();
+                }
+                setTimeout(() => {
+                    document.getElementById('description').focus();
+                }, 100);
+            }
+            // Escape to close sidebar on mobile
+            if (e.key === 'Escape' && window.innerWidth <= 1024) {
+                closeSidebarIfMobile();
+            }
+        }
+
+        function handleAddExpense(e) {
+            e.preventDefault();
+
+            const description = document.getElementById('description').value.trim();
+            const value = parseFloat(document.getElementById('value').value);
+            const category = document.getElementById('category').value;
+            const date = document.getElementById('date').value;
+
+            // Validação
+            if (!description || !value || !category || !date) {
+                alert('Por favor, preencha todos os campos');
+                return;
+            }
+
+            if (value <= 0) {
+                alert('O montante deve ser maior que 0');
+                return;
+            }
+
+            STATE.expenses.push({
+                id: Date.now(),
+                description,
+                value,
+                category,
+                date
+            });
+
+            saveToStorage();
+            document.getElementById('expenseForm').reset();
+            setDefaultDate();
+            closeSidebarIfMobile();
+            render();
+        }
+
+        function handleDeleteExpense(id) {
+            const item = document.querySelector(`[data-id="${id}"]`);
+            item.classList.add('removing');
+            setTimeout(() => {
+                STATE.expenses = STATE.expenses.filter(e => e.id !== id);
+                saveToStorage();
+                render();
+            }, 200);
+        }
+
+        function toggleCategoryFilter(category, btn) {
+            const idx = STATE.selectedCategories.indexOf(category);
+            if (idx === -1) {
+                STATE.selectedCategories.push(category);
+                btn.classList.add('active');
+            } else {
+                STATE.selectedCategories.splice(idx, 1);
+                btn.classList.remove('active');
+            }
+            render();
+        }
+
+        function handlePeriodChange(e) {
+            if (!e.target.classList.contains('filter-btn')) return;
+            
+            document.querySelectorAll('#periodFilters .filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            e.target.classList.add('active');
+            STATE.selectedPeriod = e.target.dataset.period;
+            render();
+        }
+
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        }
+
+        function closeSidebarIfMobile() {
+            if (window.innerWidth <= 1024) {
+                document.querySelector('.sidebar').classList.remove('active');
+            }
+        }
+
+        // ============ DATA FILTERING ============
+        function getFilteredExpenses() {
+            let filtered = STATE.expenses;
+
+            // Filter by category
+            if (STATE.selectedCategories.length > 0) {
+                filtered = filtered.filter(e => STATE.selectedCategories.includes(e.category));
+            }
+
+            // Filter by period
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            if (STATE.selectedPeriod === 'month') {
+                filtered = filtered.filter(e => {
+                    const eDate = new Date(e.date);
+                    return eDate.getMonth() === currentMonth && eDate.getFullYear() === currentYear;
+                });
+            } else if (STATE.selectedPeriod === '30days') {
+                const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                filtered = filtered.filter(e => new Date(e.date) >= thirtyDaysAgo);
+            }
+
+            return filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+        }
+
+        // ============ KPI CALCULATIONS ============
+        function calculateKPIs() {
+            const filtered = getFilteredExpenses();
+            
+            if (filtered.length === 0) {
+                return {
+                    total: 0,
+                    highest: 0,
+                    topCategory: '—'
+                };
+            }
+
+            const total = filtered.reduce((sum, e) => sum + e.value, 0);
+            const highest = Math.max(...filtered.map(e => e.value));
+
+            const categoryTotals = {};
+            filtered.forEach(e => {
+                categoryTotals[e.category] = (categoryTotals[e.category] || 0) + e.value;
+            });
+
+            const topCategory = Object.keys(categoryTotals).reduce((a, b) => 
+                categoryTotals[a] > categoryTotals[b] ? a : b
+            );
+
+            return {
+                total: total.toFixed(2),
+                highest: highest.toFixed(2),
+                topCategory: topCategory
+            };
+        }
+
+        // ============ CHART ============
+        function renderChart() {
+            const filtered = getFilteredExpenses();
+            const categoryTotals = {};
+
+            CATEGORIES.forEach(cat => {
+                categoryTotals[cat] = filtered
+                    .filter(e => e.category === cat)
+                    .reduce((sum, e) => sum + e.value, 0);
+            });
+
+            const isDarkTheme = document.body.classList.contains('dark-theme');
+            const lightPalette = ['#0A0A0A', '#333333', '#555555', '#777777', '#999999', '#BBBBBB', '#DDDDDD'];
+            const darkPalette = ['#FFFFFF', '#E0E0E0', '#C0C0C0', '#A0A0A0', '#808080', '#606060', '#404040'];
+            const grayscalePalette = isDarkTheme ? darkPalette : lightPalette;
+
+            const gridColor = isDarkTheme ? 'rgba(42, 42, 42, 0.5)' : 'rgba(224, 224, 224, 0.5)';
+            const textColor = isDarkTheme ? '#AAAAAA' : '#999999';
+            const tooltipBg = isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(10, 10, 10, 0.9)';
+            const tooltipBorder = isDarkTheme ? '#2A2A2A' : '#1A1A1A';
+
+            const ctx = document.getElementById('expenseChart');
+
+            if (STATE.chart) {
+                STATE.chart.destroy();
+            }
+
+            STATE.chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: CATEGORIES,
+                    datasets: [{
+                        label: 'Amount (Kz)',
+                        data: CATEGORIES.map(cat => categoryTotals[cat]),
+                        backgroundColor: grayscalePalette,
+                        borderColor: 'transparent',
+                        borderRadius: 0,
+                        barThickness: 24
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: tooltipBg,
+                            padding: 12,
+                            titleFont: { family: "'DM Mono', monospace", size: 12 },
+                            bodyFont: { family: "'DM Mono', monospace", size: 12 },
+                            borderColor: tooltipBorder,
+                            borderWidth: 1,
+                            displayColors: false,
+                            titleColor: isDarkTheme ? '#FFFFFF' : '#0A0A0A',
+                            bodyColor: isDarkTheme ? '#FFFFFF' : '#0A0A0A'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                drawBorder: false,
+                                color: gridColor
+                            },
+                            ticks: {
+                                font: { family: "'DM Mono', monospace", size: 11 },
+                                color: textColor
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                font: { family: "'DM Mono', monospace", size: 11 },
+                                color: textColor
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ============ RENDER TRANSACTIONS ============
+        function renderTransactions() {
+            const list = document.getElementById('transactionList');
+            const filtered = getFilteredExpenses();
+
+            if (filtered.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">∼</div>
+                        <div class="empty-state-text">No expenses recorded.<br>Start tracking your spending.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = filtered.map(expense => {
+                const date = new Date(expense.date);
+                const formattedDate = date.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+
+                return `
+                    <div class="transaction-item" data-id="${expense.id}">
+                        <div class="transaction-date">${formattedDate}</div>
+                        <div class="transaction-desc">${expense.description}</div>
+                        <span class="transaction-category">${expense.category}</span>
+                        <div class="transaction-value">${expense.value.toFixed(2)} Kz</div>
+                        <button class="transaction-delete" onclick="handleDeleteExpense(${expense.id})" aria-label="Eliminar">×</button>
+                    </div>
+                `;
+            }).join('');
+
+            // Attach delete listeners
+            document.querySelectorAll('.transaction-delete').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+            });
+        }
+
+        // ============ RENDER KPIs ============
+        function renderKPIs() {
+            const kpis = calculateKPIs();
+            document.getElementById('kpiTotal').textContent = `${kpis.total} Kz`;
+            document.getElementById('kpiHighest').textContent = `${kpis.highest} Kz`;
+            document.getElementById('kpiCategory').textContent = kpis.topCategory;
+        }
+
+        // ============ MAIN RENDER ============
+        function render() {
+            renderKPIs();
+            renderChart();
+            renderTransactions();
+        }
+
+        // ============ EXPORT ============
+        function exportToCSV() {
+            const filtered = getFilteredExpenses();
+
+            if (filtered.length === 0) {
+                alert('Sem despesas para exportar');
+                return;
+            }
+
+            const headers = ['Data', 'Descrição', 'Categoria', 'Montante (Kz)'];
+            const rows = filtered.map(e => [
+                new Date(e.date).toLocaleDateString('pt-PT'),
+                e.description,
+                e.category,
+                e.value.toFixed(2)
+            ]);
+
+            const csv = [
+                headers.join(','),
+                ...rows.map(row => row.join(','))
+            ].join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `despesas-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
