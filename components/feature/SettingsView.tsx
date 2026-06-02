@@ -113,16 +113,22 @@ export function SettingsView() {
       <section>
         <h2 className="text-base font-semibold mb-1">Privacidade</h2>
         <p className="text-xs text-muted-foreground mb-4">
-          Os seus dados ficam apenas neste navegador. Nada é enviado para fora.
+          Os seus dados financeiros ficam apenas neste navegador.
         </p>
         <div className="rounded-xl border border-border bg-card p-4 text-xs leading-relaxed text-muted-foreground space-y-2">
           <p>
             A aplicação usa <code className="rounded bg-muted px-1.5 py-0.5">localStorage</code>{' '}
             para guardar transações, categorias, contas, orçamentos, metas e definições.
+            Nenhum dado financeiro é enviado para fora.
           </p>
           <p>
             Limpar a cache do navegador ou trocar de dispositivo <strong>apaga</strong>{' '}
             os dados. Faça <em>backup</em> regular em <strong>Relatórios → Backup JSON</strong>.
+          </p>
+          <p>
+            O site exibe anúncios através do <strong>Google AdSense</strong>, que
+            poderá recolher dados técnicos do seu navegador (IP, user-agent, cookies)
+            para personalização e medição de anúncios.
           </p>
         </div>
       </section>

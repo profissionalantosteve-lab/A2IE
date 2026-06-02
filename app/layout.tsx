@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
+import Script from 'next/script'
 import { Toaster } from 'sonner'
 import { AppProvider } from '@/lib/store'
 import './globals.css'
+
+const ADSENSE_CLIENT_ID = 'ca-pub-6375331477686354'
 
 const geistSans = Geist({
   subsets: ['latin'],
@@ -71,6 +74,7 @@ export default function RootLayout({
     <html lang="pt-PT" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
+        <meta name="google-adsense-account" content={ADSENSE_CLIENT_ID} />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} bg-background text-foreground font-sans antialiased`}
@@ -79,6 +83,13 @@ export default function RootLayout({
           {children}
           <Toaster richColors closeButton position="top-right" />
         </AppProvider>
+        <Script
+          id="adsense-init"
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   )
