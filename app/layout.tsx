@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
-import Script from 'next/script'
 import { Toaster } from 'sonner'
 import { AppProvider } from '@/lib/store'
 import './globals.css'
@@ -75,6 +74,11 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
         <meta name="google-adsense-account" content={ADSENSE_CLIENT_ID} />
+        <script
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
+          crossOrigin="anonymous"
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} bg-background text-foreground font-sans antialiased`}
@@ -83,13 +87,6 @@ export default function RootLayout({
           {children}
           <Toaster richColors closeButton position="top-right" />
         </AppProvider>
-        <Script
-          id="adsense-init"
-          async
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
-        />
       </body>
     </html>
   )
